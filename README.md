@@ -56,11 +56,11 @@ I add comments as `tag` for convenient search. If you use Linux, you can:
 
 ## TODO:
 
-[] ssd-series support
-[] tensorboard viz
-[] block-building structure 
-[] Probability-based Detector Module develop : "Probabilistic Object Detection: Definition and Evaluation" (arXiv:1811.10800v3)
-[] Light-weight RetinaNet Develop : "Light-Weight RetinaNet for Object Detection"
+- [ ] ssd-series support
+- [ ] tensorboard viz
+- [ ] block-building structure 
+- [ ] Probability-based Detector Module develop : "Probabilistic Object Detection: Definition and Evaluation" (arXiv:1811.10800v3)
+- [ ] Light-weight RetinaNet Develop : "Light-Weight RetinaNet for Object Detection"
 
 
 
