@@ -1,0 +1,6 @@
+classes=1
+train=/data/sign_detect/mini/ImageSets/Main/train-fullpath.txt
+valid=/data/sign_detect/mini/ImageSets/Main/test-fullpath.txt
+names=/code/data/sign/FT-prohibit.names
+backup=backup/
+eval=coco

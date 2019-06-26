@@ -1,0 +1,8 @@
+# ignore garbage
+/.remove/
+# ignore byte-compiler
+__pyache__/
+# ignore weights and logs
+/tmp/
+/weights/
+/logs/
