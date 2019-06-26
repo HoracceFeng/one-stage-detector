@@ -9,7 +9,7 @@ This Project is a summary of SOTA one-stage detector, kind of like mm-detection,
 
 One more thing, some code is basically forked and re-implemented by three projects listed below, thanks for their contributions. You can also follow their work by clicking the link in 'Reference'
 
-For Chinese Version Introduction, [click here](https://github.com/HoracceFeng/one-stage-detector/tree/master/example/)
+For Chinese Version Introduction, [click here](https://github.com/HoracceFeng/one-stage-detector/blob/master/example/README-ch.md)
 
 
 ## Structure
