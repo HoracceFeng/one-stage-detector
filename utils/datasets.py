@@ -11,7 +11,8 @@ import torch
 from torch.utils.data import Dataset
 from tqdm import tqdm
 
-from utils.utils import xyxy2xywh, get_cord, normalize_convert
+from utils.utils import xyxy2xywh, xywh2xyxy, get_cord, normalize_convert
+
 
 
 class LoadImages:  
@@ -331,7 +332,8 @@ class LoadImagesAndLabels(Dataset):
         return torch.stack(img, 0), torch.cat(label, 0), path, hw
 
 
-def letterbox(img, new_shape=416, color=(127.5, 127.5, 127.5), mode='auto'):
+def letterbox(img, new_shape=416, color=(0, 0, 0), mode='auto'):
+    '''color=(127.5, 127.5, 127.5)'''
     # Resize a rectangular image to a 32 pixel multiple rectangle
     # https://github.com/ultralytics/yolov3/issues/232
     shape = img.shape[:2]  # current shape [height, width]

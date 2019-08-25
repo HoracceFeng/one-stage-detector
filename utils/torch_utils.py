@@ -1,29 +1,12 @@
 import torch
-import torch.nn as nn
+
 
 def init_seeds(seed=0):
+    torch.cuda.empty_cache()
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
-
-
-def weights_init(model, method='kaiming'):
-    '''Initial pytorch weights. Model Not use this init will have random inits'''
-    if model.format == 'darknet':
-        for layer in model.parameters():
-            if len(p.shape) < 2:
-                continue
-            if method == 'kaiming':
-                nn.init.kaiming_normal_(layer.data, mode='fan_out', nonlinearity='leaky_relu')
-            elif method == 'xavier':
-                nn.init.xavier_normal_(layer.data)
-    else:
-        classname = m.__class__.__name__
-        if classname.find('Conv') != -1:
-            if method == 'kaiming':
-                nn.init.kaiming_normal_(m.weight.data, mode='fan_out', nonlinearity='relu')
-            elif method == 'xavier':
-                nn.init.xavier_normal_(m.weight.data)
+    # torch.backends.cudnn.deterministic = True  # https://pytorch.org/docs/stable/notes/randomness.html
 
 
 def select_device(force_cpu=False):
@@ -33,16 +16,23 @@ def select_device(force_cpu=False):
     if not cuda:
         print('Using CPU')
     if cuda:
+        try:  # Mixed precision training https://github.com/NVIDIA/apex
+            from apex import amp
+            apex_str = 'with Apex '
+        except:
+            apex_str = ''
+
+        torch.backends.cudnn.benchmark = True  # set False for reproducible results
         c = 1024 ** 2  # bytes to MB
         ng = torch.cuda.device_count()
         x = [torch.cuda.get_device_properties(i) for i in range(ng)]
-        print("Using CUDA device0 _CudaDeviceProperties(name='%s', total_memory=%dMB)" %
-              (x[0].name, x[0].total_memory / c))
-        if ng > 0:
-            # torch.cuda.set_device(0)  # OPTIONAL: Set GPU ID
-            for i in range(1, ng):
-                print("           device%g _CudaDeviceProperties(name='%s', total_memory=%dMB)" %
-                      (i, x[i].name, x[i].total_memory / c))
+        cuda_str = 'Using CUDA ' + apex_str
+        for i in range(0, ng):
+            if i == 1:
+                # torch.cuda.set_device(0)  # OPTIONAL: Set GPU ID
+                cuda_str = ' ' * len(cuda_str)
+            print("%sdevice%g _CudaDeviceProperties(name='%s', total_memory=%dMB)" %
+                  (cuda_str, i, x[i].name, x[i].total_memory / c))
 
     print('')  # skip a line
     return device

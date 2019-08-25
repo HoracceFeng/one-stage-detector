@@ -5,6 +5,7 @@ from datetime import datetime
 import torch.distributed as dist
 import torch.optim as optim
 from torch.utils.data import DataLoader
+import torch.backends.cudnn as cudnn
 
 import test  # Import test.py to get mAP after each epoch
 # from models import *
@@ -31,6 +32,8 @@ def train(config, evolve=None):
     freeze_backbone      = config["model"]["weights"]["freeze"]
     transfer             = config["model"]["weights"]["transfer"]
 
+    giou_loss            = config["model"]["loss"]["giou_loss"]
+
     name                 = config["train"]["name"]
 
     data_format          = config["train"]["data"]["format"]
@@ -45,17 +48,18 @@ def train(config, evolve=None):
     lr_scheduler         = config["train"]["parameters"]["lr_scheduler"]    ## Not support yet
     momentum             = config["train"]["parameters"]["momentum"]
     weight_decay         = config["train"]["parameters"]["weight_decay"]
+    ignore_thresh        = config["train"]["parameters"]["ignore_thresh"]
 
     min_lr               = config["hidden"]["min_lr"]
     accumulate           = config["hidden"]["accumulate"]
     multi_scale          = config["hidden"]["multi-scale"]
+    dist_port            = config['hidden']['port'] 
     num_workers          = config["hidden"]["num_workers"]
     mixed_precision      = config["hidden"]["mixed_precision"]
 
     ### PARAMETERS
     start_epoch          = 0
     best_loss            = float('inf')
-    DISTRIBUTED          = False
 
     if transfer == "" or not str(transfer).isdigit():
         cutoff           = -1  # backbone reaches to cutoff layer
@@ -70,8 +74,9 @@ def train(config, evolve=None):
     ### DEVICE
     device = torch_utils.select_device()
     if multi_scale:
-        img_size = 608  # initiate with maximum multi_scale size
-        num_workers = 0  # bug https://github.com/ultralytics/yolov3/issues/174
+        img_size_max = np.ceil(img_size/32*1.5) * 32  # initiate with maximum multi_scale size
+        img_size_min = np.floor(img_size/32/1.5) *32
+        # num_workers = 0  # bug https://github.com/ultralytics/yolov3/issues/174
     else:
         torch.backends.cudnn.benchmark = True  # unsuitable for multiscale
 
@@ -103,7 +108,7 @@ def train(config, evolve=None):
         ### (under develop) need to add func later
         backbone    = config['model']['experiment']['backbone']
         head        = config['model']['experiment']['head']        
-        model       = TorchModel()
+        model       = TorchModel().to(device)
 
     elif model_format == "darknet":
         darknet_cfg = config["model"]["darknet"]["darknet_cfg"]
@@ -125,11 +130,15 @@ def train(config, evolve=None):
             lwhyp = {
                      "head":           head,
                      "k":              1,  
-                     "xy":             0.25,  
-                     "wh":             0.25,  
-                     "cls":            0.25,  
-                     "conf":           0.25,  
-                     "iou_thresh":     0.5,        
+                     "xy":             1,  
+                     "wh":             1,  
+                     "cls":            1,     
+                     "conf":           1,   ## the same as `obj`
+                     "obj":            1,
+                     "cls_pw":         1,   ## positive example weights, length == number of classes (nc)
+                     "obj_pw":         1,   ## positive example weights, length == number of classes (nc)
+                     "giou":           1,
+                     "ignore_thresh":  0.5,        
                     }
             json.dump(lwhyp, lwfile)
             print(">>> loss_weight_parameters_file: created automatically ......", loss_weight_param_path)
@@ -138,6 +147,9 @@ def train(config, evolve=None):
             print(">>> loss_weight_parameters_file: already exists ......", loss_weight_param_path)
     else:
         lwhyp  = evolve
+
+    if lwhyp['ignore_thresh'] != ignore_thresh:
+        lwhyp['ignore_thresh'] = ignore_thresh
 
 
     ### #*# NETWORK WEIGHTS LOAD
@@ -197,17 +209,21 @@ def train(config, evolve=None):
                             pin_memory=True,
                             collate_fn=dataset.collate_fn)
 
-
     ### DISTRIBUTED TRAINING DEFINE -- deprecated. To use it, please set the related parameters here
-    if DISTRIBUTED and torch.cuda.device_count() > 1:
+    if torch.cuda.device_count() > 1:
+        if dist_port is None:
+            port = str(np.random.randint(10000,65000))       
         _backend    = 'nccl'
-        _dist_url   = 'tcp://127.0.0.1:9999'
+        _dist_url   = 'tcp://127.0.0.1:'+port
         _world_size = 1
         _rank       = 0
         dist.init_process_group(backend=_backend, init_method=_dist_url, world_size=_world_size, rank=_rank)
         model = torch.nn.parallel.DistributedDataParallel(model)
-        sampler = torch.utils.data.distributed.DistributedSampler(dataset)
-
+        model.yolo_layers = model.module.yolo_layers  # move yolo layer indices to top level
+        # sampler = torch.utils.data.distributed.DistributedSampler(dataset)
+        cudnn.benchmark = True
+        print('>>>>>> Distributed URL settings: ', _dist_url)
+        print('>>>>>> Multi-gpus environment setting successfully')
 
     ### MIXED PRECISION TRAINING -- deprecated. https://github.com/NVIDIA/apex
     # install help: https://github.com/NVIDIA/apex/issues/259
@@ -215,8 +231,8 @@ def train(config, evolve=None):
         from apex import amp
         model, optimizer = amp.initialize(model, optimizer, opt_level='O1')
 
-
     ### TRAIN SECTION
+    model.nc = nc
     t, t0 = time.time(), time.time()
     if head == lwhyp['head']:
         model.lwhyp = lwhyp  # attach hyperparameters to model
@@ -235,7 +251,7 @@ def train(config, evolve=None):
     for epoch in range(start_epoch, epochs):
         ### Start traing, pass the train flag to model
         model.train()
-        print(('\n%8s%12s' + '%10s' * 7) % ('Epoch', 'Batch', 'xy', 'wh', 'conf', 'cls', 'total', 'nTargets', 'time'))
+        print(('\n%8s%12s' + '%10s' * 7) % ('Epoch', 'Batch', 'GIoU/xy', 'wh', 'conf', 'cls', 'total', 'nTargets', 'time'))
         ### Update scheduler
         scheduler.step()
         ### Freeze backbone 
@@ -246,8 +262,10 @@ def train(config, evolve=None):
 
         mloss = torch.zeros(5).to(device)  # mean losses
         for i, (imgs, targets, _, _) in enumerate(dataloader):
-            if i % 10 != 0:
-                continue
+            ''' `i` means #batch '''
+            # if i % 10 != 0:
+            #     continue
+
             imgs = imgs.to(device)
             targets = targets.to(device)
             nt = len(targets)
@@ -267,7 +285,7 @@ def train(config, evolve=None):
 
             ### Compute loss
             if head == 'yolov3':
-                loss, loss_items = compute_loss(pred, targets, model)   ## YOLO_loss, deprecated later
+                loss, loss_items = compute_loss(pred, targets, model, giou_loss=giou_loss)   ## YOLO_loss, deprecated later
             else:
                 print('DetectorError: please provide the correct name of detector head in ', model_format)
 
@@ -299,7 +317,7 @@ def train(config, evolve=None):
 
             ### Multi-Scale training (320 - 608 pixels) every 10 batches
             if multi_scale and (i + 1) % 10 == 0:
-                dataset.img_size = random.choice(range(10, 21)) * 32
+                dataset.img_size = random.choice(range(int(img_size_min//32), int(img_size_max//32))) * 32
                 print('multi_scale img_size = %g' % dataset.img_size)
 
         ### (deprecated) Calculate mAP (always test final epoch, skip first 5 if nosave)
@@ -350,6 +368,8 @@ def train(config, evolve=None):
 
     dt = (time.time() - t0) / 3600
     print('%g epochs completed in %.3f hours.' % (epoch - start_epoch, dt))
+
+    dist.destroy_process_group() if DISTRIBUTED and torch.cuda.device_count() > 1 else None
     return results, lwhyp
 
 
@@ -373,9 +393,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--config', type=str,                 help='configure path')
     parser.add_argument('-e', '--evolve', type=bool, default=False, help='evolve loss weight paramters only')
+    parser.add_argument('-p', '--port',   type=str,  default=None,  help='Distributed Data Parallel (multi-gpus), None for random')
     parser_augments = parser.parse_args()
     config_path = parser_augments.config
     evolve = parser_augments.evolve
+    port = parser_augments.port
     print('>>> Loading config_path ......', config_path)
 
     ### -------------------------- Main -------------------------- ###
@@ -387,9 +409,11 @@ if __name__ == '__main__':
     # accumerate batch for later gradient updates
     config['hidden']['accumulate']                 = 1
     # Dataloader num_workers
-    config['hidden']['num_workers']                = 2
+    config['hidden']['num_workers']                = config['train']['data']['num_workers']
     # multi-scale training
     config['hidden']['multi-scale']                = True
+    # multi-gpus training (distributed settings)
+    config['hidden']['port']                       = port
     # Mixed precision training: https://github.com/NVIDIA/apex --> install https://github.com/NVIDIA/apex/issues/259
     config['hidden']['mixed_precision']            = False
     if evolve:    

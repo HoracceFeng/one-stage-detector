@@ -2,7 +2,7 @@
     "model":{
 
         "darknet":{
-            "darknet_cfg":    "tmp/yolo3_model/FT-Prohibit-yolov3-tiny-anchor5-tt100k-512-test.cfg",
+            "darknet_cfg":    "cfg/darknet/yolov3-tiny.cfg",
             "head":           "yolov3"
         },
 
@@ -14,7 +14,7 @@
         "weights":{
             "format":         "darknet",
             "pretrain":       "/code/weights/yolov3-tiny.weights",
-            "resume":         "False",
+            "resume":         "True",
             "transfer":       15,
             "freeze":         "False"
         },
@@ -22,10 +22,14 @@
         "parameters":{
             "dictfile":       "/code/data/sign/FT-prohibit.names",
             "autoevolve":     "False",
-            "notest":         "False",
-            "nosave":         "False",
+            "notest":         "True",
+            "nosave":         "True",
             "save_interval":  1,
             "debug":          "False"
+        },
+
+        "loss":{
+            "giou_loss":      "False"
         }
 
     },
@@ -36,19 +40,21 @@
         "name":               "TC-sign-pytorch-yolov3",
 
         "data":{
-            "format":         "darknet",
-            "txtpath":        "/data/sign_detect/mini/ImageSets/Main/train-fullpath.txt",
-            "augment":        "True"
+            "format":         "voc",
+            "txtpath":        "/data/sign_detect/mini/ImageSets/Main/train-fullpath.long.txt",
+            "augment":        "True",
+            "num_workers":    4
         },
 
         "parameters":{
             "max_epoch":      100,
-            "batch":          16,
+            "batch":          32,
             "size":           512,
             "learning_rate":  0.001,
             "lr_scheduler":   "",
             "momentum":       0.9127,
             "weight_decay":   0.0004841,
+            "ignore_thresh":  0.5,
             "gpus":           ""
         }
 

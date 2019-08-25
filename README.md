@@ -1,41 +1,25 @@
       Editor   :   Haonan Feng
-      Date     :   2019.05.20
+      Date     :   2019.08.14
 
 
-# Pipeline of One-Stage Detector 
-
-This Project is a summary of SOTA one-stage detector, kind of like mm-detection, but I am trying to make this more convenient to use. The other reason to start this project is, the object detection algorithm is actually have a clear pipeline, but different repos in github usually have huge  difference in using their code. To figure this, I then decide to do this pipeline code and try unify them in just one strcture. I sware, this code is definitely a newbie-friendly and developer-friendly code. Just simply plugin and run, and you get the world.
+这套代码旨在对 one-stage 检测器进行汇总。通过统一数据部署，模型训练，结果输出三部分的格式，为各位开发检测模型算法提供一套快捷的开发代码，同时希望能方便模型的后续部署工作。
 
 
-One more thing, some code is basically forked and re-implemented by three projects listed below, thanks for their contributions. You can also follow their work by clicking the link in 'Reference'
-
-For Chinese Version Introduction, [click here](https://github.com/HoracceFeng/one-stage-detector/blob/master/example/README-ch.md)
-
-
-## Structure
-
-- Input Loader: `Pascal VOC` structure are used in this code. I prefer to use a txt file in `ImageSets/Main/train.txt` to control the data I use in training
-
-- Model Design: By choosing differents `backbons`, `head` and `loss` in config, you can simply your unique model and have some fun.
-
-- Output Result: using `detect.py` with your trained model to get your results. It is also very convenient to use when you just want to build up an app. If you want to further analysis your results and get the evaluation report, just follow this repo [detection_evaluate](https://github.com/HoracceFeng/detection_eval) directly. 
+## 这套代码的构造初衷是：
+- 数据输入：使用 `voc` 格式部署数据，通过 `ImageSets/Main/train.txt` 控制模型训练需要使用的图片数据
+- 模型设计：选择不同的 `backbone`, `head`, `loss`, 可以自由组建不同形式的模型
+- 结果输出：输出结果部分有独立脚本 `detect.py` 方便后续模型部署的工作。另外，输出结果可以无缝对接到 [detection_evaluate](http://10.202.56.200:81/horacce/detection_evaluation) 项目中直接进行模型性能测试。 
 
 
-## Code Catalog
-
-For people who want to further study the algorithms by code or just want to do further development, here is a trick that may help you.
-
-I add comments as `tag` for convenient search. If you use Linux, you can:
-- ```grep -nr '###' [*.py]``` can output the catalog of `*.py` script
-- ```grep -nr '#\*#' [*.py]``` can output which part in `*.py` script can be modified. [especially for trainee]
-
-
-## Reference
-
+## 代码结构参考:
 - [keras-yolo3](https://github.com/experiencor/keras-yolo3)
 - [pytorch_yolov3](https://github.com/ultralytics/yolov3)
 - [ssds.pytorch](https://github.com/ShuangXieIrene/ssds.pytorch)
-- [detection_evaluate](https://github.com/HoracceFeng/detection_eval)
+
+
+## 目前代码支持：
+- 无缝对接 darknet，可直接将源码训练得到的 yolov3 模型迁移过来继续开发
+- pytorch yolov3 train, either train from scratch or train from darknet-pretrain-model
 
 
 ## Requirements:
@@ -47,47 +31,48 @@ I add comments as `tag` for convenient search. If you use Linux, you can:
 - tqdm
 
 
-## Now Support：
-
-- Yolov3, Yolov3-Tiny
-  - model trained from *darknet* source code can transfer to this code directly with the origin `.cfg`, `.data` and `.name` file. 
-  - directly trained by this code, either train from scratch or train from darknet-pretrain-model
-
-
 ## TODO:
+- [] backbone support: Vovnet, Mobilenet-v3
+- [] fix error issue when pytorch model transfer back to darknet
+- [] add pytorch model script transfer back to darknet cfg
+- [] rewrite `loss` module, make it independent
 
-- [ ] ssd-series support
-- [ ] tensorboard viz
-- [ ] block-building structure 
-- [ ] Probability-based Detector Module develop : "Probabilistic Object Detection: Definition and Evaluation" (arXiv:1811.10800v3)
-- [ ] Light-weight RetinaNet Develop : "Light-Weight RetinaNet for Object Detection"
-
-
-
-## How to Use
-
-0. You should firstly install requirements listed above by just simply using `pip install [package]`
-1. write `cfg/config.json` correctly. Detailed arguments listed below. Also, you can just use the example and modify the datapath to start training yolo3-tiny model directly.
-2. train model： ```python train.py -c cfg/config.json```
-3. (optional) The default weights for different parts of LOSS function is the same. But if you want to search a better weights for better result, you can try this ```python train.py -c cfg/config.json -e True ```. However, it may takes a very long time. So you can just skip it.
-4. output result： ```python detect.py -c cfg/config.json```
+- [] ssd-series support
+- [] tensorboard viz
+- [] block-building structure 
+- [] Probability-based Detector Module develop : "Probabilistic Object Detection: Definition and Evaluation" (arXiv:1811.10800v3)
+- [] Light-weight RetinaNet Develop : "Light-Weight RetinaNet for Object Detection"
 
 
 
+欢迎各位协助开发
 
 
-## Detail of Configuration
+## 使用方式
+1. 正确配置 `cfg/config.json`
+2. 模型训练： ```python train.py -c cfg/config.json```
+3. (optional) 默认各部分损失函数的权重相等，但是若需要作进一步的训练，可使用权重更新，需要时间较长，慎用。  ```python train.py -c cfg/config.json -e True ```
+4. 模型检测： ```python detect.py -c cfg/config.json```
+
+
+## 代码修改和开发
+为方便对该代码进行个性化的开发和使用，我在备注中加入了便于检索的`tag`
+- ```grep -nr '###' [*.py]``` 可以输出具体某个 `*py` 代码的目录
+- ```grep -nr '#\*#' [*.py]``` 可以输出具体该 `*py` 代码中可修改优化的部分
+
+
+## 配置文件详解
 ```
 {
-    ### parameters of model
+    ### 模型参数
     "model":{
-        ### if you use model trained by darknet, please make changes in “darknet”
+        ### 使用 darknet 迁移过来的模型，请配置 “darknet”
         "darknet":{
             "darknet_cfg":    "tmp/yolo3_model/FT-Prohibit-yolov3-tiny-anchor5-tt100k-512-test.cfg",
-            "head":           "yolov3"                                ## now only support yolov3
+            "head":           "yolov3"                                ## 目前只支持 yolov3
         },
 
-        ### still under develop, will support SSD-series further
+        ### 开发中，不可用，后续支持 ssd
         "experiment":{
             "backcbone":      "yolov3-tiny",
             "head":           "yolov3",
@@ -95,86 +80,87 @@ I add comments as `tag` for convenient search. If you use Linux, you can:
         },
 
         "weights":{
-            "format":         "darknet",                              ## no need to train
-            "pretrain":       "/code/weights/yolov3-tiny.weights",    ## pretrain model path
-            "resume":         "False",                                ## use pretrain model or not
-            "transfer":       ,                                       ## fill nothing means use the whole model, fill a number such as '3' means freeze the model before layer 3
-            "freeze":         "False"                                 ## train the backbone or not [a little bit the same as `transfer`]
+            "format":         "darknet",                              ## 无需修改 
+            "pretrain":       "/code/weights/yolov3-tiny.weights",    ## 预训练模型路径
+            "resume":         "False",                                ## 控制是否使用预训练模型
+            "transfer":       ,                                       ## 数字可指定预训练模型使用到第几层（置空为全用）
+            "freeze":         "False"                                 ## 控制是否训练 backbone
         },
 
         "parameters":{
             "dictfile":       "/code/data/sign/FT-prohibit.names",
-            "autoevolve":     "False",                                ## under develop, in order to evlove the loss weight automatically
-            "notest":         "False",                                ## if True, the model will be tested after each epoch
-            "nosave":         "False",                                ## if True, the model will be saved after each epoch
-            "save_interval":  1,                                      ## skip how many epoch to save the model 
+            "autoevolve":     "False",                                ## 开发中，自动更新参数
+            "notest":         "False",                                ## 训练时是否每个 epoch 进行测试
+            "nosave":         "False",                                ## 训练时是否保存权重
+            "save_interval":  1,                                      ## 间隔多少 epoch 保存权重
             "debug":          "False"
         }
 
     },
 
-    ### parameters to control model training，only use in `train.py`
+    ### 模型训练使用的参数，仅用于 `train.py`
     "train":{
         
-        "name":               "TC-sign-pytorch-yolov3",               ## project name, will create a file with this name automatically, the saved model will use this name as prefix
+        "name":               "TC-sign-pytorch-yolov3",               ## 项目名称，用于自动生成结果保存的文件夹，以及权重名称前缀
        
-        ### Data Input Loader
+        ### 数据输入格式
         "data":{
-            "format":         "voc",                                  ## data input format, "voc" or "darknet". "voc" for "Pascal voc" dataset strucutre. "darknet" for `labels` directory use in darkent source code 
-            "txtpath":        "/data/ImageSets/Main/train.txt",       ## a txtfile path that control which images to train
-            "augment":        "True"                                  ## data augmentation or not
+            "format":         "voc",                                  ## 数据输入格式，"voc"即支持voc格式；"darknet"即需要使用 darknet 源码转化后的 labels 文件，
+            "txtpath":        "/data/sign_detect/mini/ImageSets/Main/train-fullpath.txt",
+            "augment":        "True",                                 ## 是否进行数据增广
+            "num_workers":    0                                       ## default value 为0，控制数据输入的进程数
         },
 
         "parameters":{
-            "max_epoch":      100,                                    ## max number of epoch to train
+            "max_epoch":      100,                                    ## 最大训练 epoch 数
             "batch":          16,                                     ## batch_size
-            "size":           512,                                    ## input size，only support square size. for rectangle data, just modify `dat/dataset.py` by following the comments.
-            "learning_rate":  0.001,                                  ## learning rate. default update method is `inverse-exp`
-            "lr_scheduler":   "",                                     ## under develop, not support yet
+            "size":           512,                                    ## 输入数据size，仅支持正方形。非正方形会被 resize+pad，要支持长方形需更改 `data/dataset.py`
+            "learning_rate":  0.001,                                  ## 初始学习率，默认使用 inverse-exp 进行学习率更新
+            "lr_scheduler":   "",                                     ## 未支持。grep -nr '### #\*# SCHEDULER' 手动修改学习率变化
             "momentum":       0.9127,
             "weight_decay":   0.0004841,
-            "gpus":           ""                                      ## support multi-gpu
+            "gpus":           ""                                      ## 支持多gpu
         }
 
     },
 
-    ### parameters to control the evaluation in training, only use in `train.py`
+    ### 模型测试使用的参数，仅用于 `train.py`
     "test":{
 
         "data":{
-            "format":         "darknet",                              ## data input format, "voc" or "darknet". "voc" for "Pascal voc" dataset strucutre. "darknet" for `labels` directory use in darkent source code 
-            "txtpath":        "/data/ImageSets/Main/eval.txt"         ## a txtfile path that control which images to evaluate
+            "format":         "darknet",                              ## 数据输入格式，"voc"即支持voc格式；"darknet"即需要使用 darknet 源码转化后的 labels 文件
+            "txtpath":        "/data/sign_detect/mini/ImageSets/Main/train-fullpath.txt"
         },
 
         "parameters":{
-            "start_epoch":    1,                                      ## test from which epoch
-            "interval":       1,                                      ## test epoch intervel number
-            "batch":          2,                                      ## test batch size, can set the same number as train, or a little bit larger
-            "size":           512                                     ## input size of evaluation. for rectangle data, just modify `dat/dataset.py` by following the comments.dataset.py`                         
+            "start_epoch":    1,                                      ## 第几个 epoch 开始测试
+            "interval":       1,                                      ## 测试间隔 epoch
+            "batch":          2,                                      ## 测试 batch_sizer
+            "size":           512                                     ## 测试图片size。要支持长方形需更改 `data/dataset.py`                         
         }
     },
 
 
-    ### parameters to control result output, only use in `detect.py` 
+    ### 仅用于 `detect.py` 
     "evaluate":{
 
         "model":{
-            "weights_path":   "/code/weights/TC-sign-pytorch-yolov3/best.pt",     ## suppoer model file .pt (pytorch) or .weight (darknet)
+            "weights_path":   "/code/weights/TC-sign-pytorch-yolov3/best.pt",     ## 检测使用的权重，支持 .pt 或者 .weight
             "conf_thresh":    0.5,
             "nms_thresh":     0.5
         },
 
         "data":{
-            "name":           "TC-test",                                          ## Project Name. Output result file will create by using this name. The result file can then be used in the repo `detection_eval` to generate reuslt report.
-            "dirpath":        "/data/JPEGImages/test",                            ## datapath
-            "isimages":       "True"                                              ## test data is `image` or not. No need to change
+            "name":           "TC-test",                                          ## 检测项目名称
+            "dirpath":        "/data/sign_detect/mini/JPEGImages/test",           ## 检测图片路径
+            "isimages":       "True"                                              ## 检测文件为图片时，不用修改
         },
 
         "parameters":{
-            "outdir":         "/code/output",                                     ## Output directory.
-            "size":           512,                                                ## input size of test. rectangle image will be resize and pad
-            "save_images":    "True",                                             ## save result images or not
-            "gpus":           ""                                                  ## support multi-gpus
+            "outdir":         "/code/output",                                     ## 结果输出路径
+            "size":           512,                                                ## 检测图片 size，仅支持正方性，非正方形会被 resize+pad
+            "save_images":    "True",                                             ## 是否保存结果图片
+            "gpus":           ""                                                  ## 支持多gpu
         }
 
     }

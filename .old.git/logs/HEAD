@@ -1,0 +1,19 @@
+0000000000000000000000000000000000000000 33e7c7ca2ccc382dca4b50b57bf727326668ca68 Horacce <haonanfengus@outlook.com> 1562308470 +0800	clone: from ssh://git@10.202.56.200:822/horacce/detector.git
+33e7c7ca2ccc382dca4b50b57bf727326668ca68 33e7c7ca2ccc382dca4b50b57bf727326668ca68 Horacce <haonanfengus@outlook.com> 1563356113 +0800	checkout: moving from master to DP_detector_v0,.1
+33e7c7ca2ccc382dca4b50b57bf727326668ca68 3e7f578a5860ec9c265ff63a60b96cca39ddf186 Horacce <haonanfengus@outlook.com> 1563356134 +0800	commit: for self use
+3e7f578a5860ec9c265ff63a60b96cca39ddf186 33e7c7ca2ccc382dca4b50b57bf727326668ca68 Horacce <haonanfengus@outlook.com> 1563356161 +0800	checkout: moving from DP_detector_v0,.1 to master
+33e7c7ca2ccc382dca4b50b57bf727326668ca68 9d54a268c906ed49cf7d9419e872a68d8875c853 Horacce <haonanfengus@outlook.com> 1563356803 +0800	checkout: moving from master to FETCH_HEAD
+9d54a268c906ed49cf7d9419e872a68d8875c853 33e7c7ca2ccc382dca4b50b57bf727326668ca68 Horacce <haonanfengus@outlook.com> 1563356851 +0800	checkout: moving from 9d54a268c906ed49cf7d9419e872a68d8875c853 to master
+33e7c7ca2ccc382dca4b50b57bf727326668ca68 9d54a268c906ed49cf7d9419e872a68d8875c853 Horacce <haonanfengus@outlook.com> 1563356876 +0800	checkout: moving from master to FETCH_HEAD
+9d54a268c906ed49cf7d9419e872a68d8875c853 33e7c7ca2ccc382dca4b50b57bf727326668ca68 Horacce <haonanfengus@outlook.com> 1563356967 +0800	checkout: moving from 9d54a268c906ed49cf7d9419e872a68d8875c853 to master
+33e7c7ca2ccc382dca4b50b57bf727326668ca68 9d54a268c906ed49cf7d9419e872a68d8875c853 Horacce <haonanfengus@outlook.com> 1563356992 +0800	checkout: moving from master to FETCH_HEAD
+9d54a268c906ed49cf7d9419e872a68d8875c853 9d54a268c906ed49cf7d9419e872a68d8875c853 Horacce <haonanfengus@outlook.com> 1563357007 +0800	checkout: moving from 9d54a268c906ed49cf7d9419e872a68d8875c853 to DP_detector_v0.2
+9d54a268c906ed49cf7d9419e872a68d8875c853 33e7c7ca2ccc382dca4b50b57bf727326668ca68 Horacce <haonanfengus@outlook.com> 1563358976 +0800	checkout: moving from DP_detector_v0.2 to master
+33e7c7ca2ccc382dca4b50b57bf727326668ca68 33e7c7ca2ccc382dca4b50b57bf727326668ca68 Horacce <haonanfengus@outlook.com> 1563359172 +0800	checkout: moving from master to v0.1
+33e7c7ca2ccc382dca4b50b57bf727326668ca68 33e7c7ca2ccc382dca4b50b57bf727326668ca68 Horacce <haonanfengus@outlook.com> 1563359185 +0800	checkout: moving from v0.1 to master
+33e7c7ca2ccc382dca4b50b57bf727326668ca68 33e7c7ca2ccc382dca4b50b57bf727326668ca68 Horacce <haonanfengus@outlook.com> 1563359188 +0800	checkout: moving from master to v0.2
+33e7c7ca2ccc382dca4b50b57bf727326668ca68 33e7c7ca2ccc382dca4b50b57bf727326668ca68 Horacce <haonanfengus@outlook.com> 1563359408 +0800	checkout: moving from v0.2 to v0.1
+33e7c7ca2ccc382dca4b50b57bf727326668ca68 35928af69aa2e5188f069e6cca7caaa01fd081a1 Horacce <haonanfengus@outlook.com> 1563359470 +0800	commit: origin version info
+35928af69aa2e5188f069e6cca7caaa01fd081a1 33e7c7ca2ccc382dca4b50b57bf727326668ca68 Horacce <haonanfengus@outlook.com> 1563359478 +0800	checkout: moving from v0.1 to v0.2
+33e7c7ca2ccc382dca4b50b57bf727326668ca68 31914470501f1be388f792a4f537a491e807cb00 Horacce <haonanfengus@outlook.com> 1563359513 +0800	commit: origin version info
+31914470501f1be388f792a4f537a491e807cb00 810df20eafd38787059a2db31333254396a7e000 Horacce <haonanfengus@outlook.com> 1565579327 +0800	commit: 0.2 on the way 1
